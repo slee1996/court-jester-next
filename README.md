@@ -42,11 +42,7 @@ The code follows these steps:
 
 1. Configure the OpenAI API with the provided API keys.
 2. Define utility functions for checking if a file exists and prompting GPT-3.
-3. Create a postMethod function that performs the following actions:
-    - Extract the prompt and number of responses from the request body.
-    - Send the prompt to the GPT-3 API and receive the generated responses.
-    - For each generated response, extract the code and function name.
-    - Attempt to run the extracted code in an isolated virtual machine (VM) to ensure it doesn't cause any harmful side effects or security risks. Record the execution timing and success status.
+3. Create a postMethod function that performs the following actions: - Extract the prompt and number of responses from the request body. - Send the prompt to the GPT-3 API and receive the generated responses. - For each generated response, extract the code and function name. - Attempt to run the extracted code in an isolated virtual machine (VM) to ensure it doesn't cause any harmful side effects or security risks. Record the execution timing and success status.
     - If the code execution is successful, generate a Jest test file for the extracted code and write the test file to disk.
     - After all generated code snippets have been processed, check if all of them were executed successfully in the VM.
     - If all code snippets executed successfully, run the Jest tests on the generated test files.

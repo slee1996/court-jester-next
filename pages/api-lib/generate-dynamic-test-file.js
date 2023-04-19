@@ -31,7 +31,7 @@ async function generateDynamicTestFile(fnToTest) {
         },
         {
           role: "user",
-          content: `Generate a jest test for the following function. Be sure to consider edge cases when writing the test, and each test should contain at least two assertions. Instead of importing the function, include the function at the top of the file. Here is the function: ${fnToTest}`,
+          content: `Generate a jest test for the following function. Be sure to consider edge cases when writing the test, and each test should contain at least two assertions. Instead of importing the function, include the provided function at the top of the test file without any adjustments. Here is the function: ${fnToTest}`,
         },
       ],
     });

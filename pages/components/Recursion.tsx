@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface Node {
   name: string;
   children?: Node[];
   element?: any;
+  displayChildren?: Boolean;
 }
 
 interface TreeNodeProps {
@@ -12,10 +13,17 @@ interface TreeNodeProps {
 }
 
 const TreeNode: React.FC<TreeNodeProps> = ({ node, depth }) => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  useEffect(() => {
+    if (node.displayChildren === true) {
+      console.log(node);
+
+      setIsVisible((currentVal) => !currentVal);
+    }
+  }, [node]);
 
   const toggleVisibility = () => {
-    setIsVisible(!isVisible);
+    setIsVisible((currentVal) => !currentVal);
   };
 
   if (!node) {
@@ -27,7 +35,10 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, depth }) => {
       className='border border-black flex flex-col justify-center'
       style={{ marginLeft: depth * 20 }}
     >
-      <button onClick={toggleVisibility} className='text-center cursor-pointer uppercase'>
+      <button
+        onClick={toggleVisibility}
+        className='text-center cursor-pointer uppercase'
+      >
         {node.name ? (isVisible ? "close" : "view") : null} {node.name}
       </button>
       {node.children && isVisible && (

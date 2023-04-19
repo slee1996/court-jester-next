@@ -19,10 +19,10 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code }) => {
   };
 
   return (
-    <div className='bg-gray-800 p-4 rounded-lg relative w-full'>
+    <div className='bg-gray-800 p-4 rounded-lg relative'>
       <pre
         ref={codeRef}
-        className='text-white text-sm font-mono p-4 rounded-lg w-full overflow-x-scroll scrollbar-custom'
+        className='text-white text-sm font-mono p-4 rounded-lg overflow-x-scroll scrollbar-custom'
       >
         {code}
       </pre>

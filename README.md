@@ -1,4 +1,4 @@
-# Court Jester Frontend
+# Court Jester
 Court Jester is an innovative web application that empowers users to generate and evaluate large volumes of code using advanced large language models (LLMs) like OpenAI's GPT-3. By leveraging the OpenAI API, Court Jester takes user input and produces a variety of code samples tailored to the given requirements. The application offers a user-friendly interface that enables users to not only view the generated code but also run tests and analyze the performance of the code. This unique combination of LLM-powered code generation and integrated testing capabilities makes Court Jester a valuable tool for developers looking to optimize their workflow and enhance their code quality.
 
 ## Getting Started

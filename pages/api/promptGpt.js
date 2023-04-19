@@ -91,12 +91,14 @@ const postMethod = async (ctx, res) => {
 
         // Write the generated test code to the test file
         await fs.writeFile(testFileName, test, "utf8");
-        console.log("frogs:", test);
+
         testsToSend.push(test);
+
+        return { ...chat, test: test };
       }
     });
 
-    await Promise.all(chatPromises);
+    chats = await Promise.all(chatPromises);
 
     if (codeExecutionsWereSuccessful.every((execution) => execution === true)) {
       const jestRun = await runJestTests();

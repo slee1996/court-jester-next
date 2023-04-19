@@ -27,11 +27,14 @@ async function generateDynamicTestFile(fnToTest) {
       messages: [
         {
           role: "system",
-          content: `You are a test engineer for Netflix writing jest tests.`,
+          content:
+            "You are a skilled test engineer specializing in writing high-quality Jest tests. Your primary responsibility is to ensure the reliability and robustness of the software by crafting comprehensive test cases that cover various scenarios and edge cases.",
         },
         {
           role: "user",
-          content: `Generate a jest test for the following function. Be sure to consider edge cases when writing the test, and each test should contain at least two assertions. Instead of importing the function, include the provided function at the top of the test file without any adjustments. Here is the function: ${fnToTest}`,
+          content: `Create a comprehensive Jest test suite for the given function, ensuring thorough coverage of edge cases. Each test should have at least two assertions. Include the provided function directly at the top of the test file without any modifications. Do not attempt to require or import the function. Use the following format:
+          ${fnToTest}
+          // test suite starts here`,
         },
       ],
     });

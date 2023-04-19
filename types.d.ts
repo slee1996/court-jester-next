@@ -12,4 +12,5 @@ interface Chat {
   };
   // Add other properties as needed
   finish_reason: string;
+  test?: string;
 }

@@ -43,9 +43,13 @@ Runs the linter to check for code issues and enforce code style.
 
 ## Built With
 Next.js - A framework for building React applications with server-side rendering and static site generation support
+
 React - A JavaScript library for building user interfaces
+
 TypeScript - A typed superset of JavaScript that adds static types
+
 Tailwind CSS - A utility-first CSS framework for rapid UI development
+
 OpenAI - An API for generating human-like text based on input prompts
 
 ## Contributing

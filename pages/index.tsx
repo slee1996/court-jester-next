@@ -5,8 +5,10 @@ import GptResponse from "./components/GptResponse";
 import TestResults from "./components/TestResults";
 
 type ChatResponse = {
+  codeRunTiming: string[];
   chats: any[];
   jestRun: any;
+  testsToSend: string[];
 };
 
 const inter = Inter({ subsets: ["latin"] });
@@ -26,6 +28,7 @@ export default function Home() {
       }),
     });
     const data = await res.json();
+    console.log(data.testsToSend[0]);
 
     setChats(data);
   };
@@ -52,9 +55,12 @@ export default function Home() {
         </button>
       </div>
       {chats?.chats.map((chat, i) => (
-        <GptResponse key={i} chat={chat.message.content} />
+        <>
+          <div>{chats.codeRunTiming}</div>
+          <GptResponse key={i} chat={chat.message.content} />
+        </>
       ))}
-      {chats && <TestResults testString={chats?.jestRun} />}
+      {chats && <TestResults chat={chats} />}
     </main>
   );
 }

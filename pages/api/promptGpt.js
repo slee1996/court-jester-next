@@ -1,16 +1,26 @@
-const { Configuration, OpenAIApi } = require("openai");
+import { Configuration, OpenAIApi } from "openai";
+import fs from "fs/promises";
 import extractCodeFromString from "../api-lib/extract-code-from-string";
 import getFunctionName from "../api-lib/get-function-name";
 import runCodeInIsolatedVm from "../api-lib/run-code-in-isolated-vm-js";
 import runJestTests from "../api-lib/run-jest-tests";
 import generateDynamicTestFile from "../api-lib/generate-dynamic-test-file";
-import fs from "fs";
+import deleteTestFiles from "../api-lib/deleteTestFiles";
 
 const configuration = new Configuration({
   organization: process.env.OPENAI_ORG_KEY,
   apiKey: process.env.OPENAI_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
+
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
 
 async function promptGpt(storyPrompt, numberOfResponses) {
   try {
@@ -34,66 +44,72 @@ async function promptGpt(storyPrompt, numberOfResponses) {
 
 const postMethod = async (ctx, res) => {
   const { prompt, numberOfResponses } = JSON.parse(ctx.body);
-  try {
-    const chats = await promptGpt(prompt, numberOfResponses);
-    const generatedFunctions = new Set();
-    const codeExecutionsWereSuccessful = [];
+  let chats;
+  const codeExecutionsWereSuccessful = [];
+  const codeRunTiming = [];
+  const testsToSend = [];
 
-    chats.forEach(async (chat, i) => {
+  try {
+    chats = await promptGpt(prompt, numberOfResponses);
+    const generatedFunctions = new Set();
+
+    const chatPromises = chats.map(async (chat, i) => {
       const extractedCode = extractCodeFromString(chat.message.content);
       const functionName = getFunctionName(extractedCode);
 
       generatedFunctions.add(functionName);
 
-      const start = Date.now();
-
-      console.log(`Start running ${functionName}-${i} in isolated vm-${i}`);
-
       let codeExecutionSuccessful = false;
 
       try {
+        const newStart = Date.now();
+
         await runCodeInIsolatedVm(extractedCode);
+
+        codeRunTiming.push(
+          `End running ${functionName}-${i} in isolated vm-${i}: ${
+            Date.now() - newStart
+          }ms`
+        );
         codeExecutionSuccessful = true;
       } catch {
         codeExecutionSuccessful = false;
       }
 
-      const ms = Date.now() - start;
-
-      console.log(
-        `End running ${functionName}-${i} in isolated vm-${i}`,
-        `Success: ${codeExecutionSuccessful}`,
-        ms + "ms"
-      );
-
       if (codeExecutionSuccessful) {
-        // const functionCodeWithExport = `${extractedCode}\nmodule.exports = { ${
-        //   extractedCode.match(/function\s+(\w+)/)[1]
-        // } };`;
-
-        // fs.writeFileSync(
-        //   `${functionName}${i}.js`,
-        //   extractedCode,
-        //   "utf8"
-        // );
-        generateDynamicTestFile(
-          `${functionName}${i}.test.js`,
+        const testFileName = `${functionName}${i}.test.js`;
+        const test = await generateDynamicTestFile(
+          testFileName,
           functionName,
           extractedCode
         );
+        // Delete existing test file if it exists
+        const testExists = await fileExists(testFileName);
+        if (testExists) {
+          await fs.unlink(testFileName);
+        }
+
+        // Write the generated test code to the test file
+        await fs.writeFile(testFileName, test, "utf8");
+        console.log("frogs:", test);
+        testsToSend.push(test);
       }
     });
 
-    if (codeExecutionsWereSuccessful.every((success) => success === true)) {
+    await Promise.all(chatPromises);
+
+    if (codeExecutionsWereSuccessful.every((execution) => execution === true)) {
       const jestRun = await runJestTests();
       return {
+        codeRunTiming,
         chats,
         jestRun,
+        testsToSend,
       };
     }
-    return { chats, jestRun: false };
+    return { codeRunTiming, chats, jestRun: false, testsToSend };
   } catch (err) {
-    return err;
+    return { codeRunTiming, chats, jestRun: err, testsToSend };
   }
 };
 
@@ -102,6 +118,8 @@ export default async function handler(req, res) {
     const body = await postMethod(req, res);
 
     res.status(200).json(body);
+
+    await deleteTestFiles();
   } else {
     res.status(200).json({ message: "owo whats this? no handling >w<" });
   }

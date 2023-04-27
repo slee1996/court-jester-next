@@ -25,7 +25,6 @@ export default function TestResults({ chat }: { chat: Response }) {
       ],
     },
   ];
-  console.log(chat.testsToSend);
 
   return <Recursion data={recursionConfig} />;
 }

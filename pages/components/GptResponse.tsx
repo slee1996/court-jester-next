@@ -1,4 +1,4 @@
-import extractCodeFromString from "../api-lib/extract-code-from-string";
+import { extractCodeFromString } from "@/lib/utils";
 import CodeBlock from "./CodeBlock";
 
 export default function GptResponse({ chat }: { chat: string }) {

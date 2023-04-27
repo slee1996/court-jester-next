@@ -5,7 +5,7 @@ import CodeBlock from "./CodeBlock";
 interface ChatCardProps {
   timing: string;
   chat: Chat;
-  testCode: string;
+  testCode?: string;
 }
 
 export const ChatCard: React.FC<ChatCardProps> = ({
@@ -17,9 +17,6 @@ export const ChatCard: React.FC<ChatCardProps> = ({
     <div>{timing}</div>
     <div className='overflow-x-scroll scrollbar-custom'>
       <GptResponse chat={chat.message.content} />
-    </div>
-    <div className='overflow-x-scroll scrollbar-custom'>
-      <CodeBlock code={chat.test as string} />
     </div>
   </div>
 );

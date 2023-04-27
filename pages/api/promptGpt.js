@@ -1,11 +1,12 @@
 import { Configuration, OpenAIApi } from "openai";
 import fs from "fs/promises";
-import extractCodeFromString from "../api-lib/extract-code-from-string";
-import getFunctionName from "../api-lib/get-function-name";
-import runCodeInIsolatedVm from "../api-lib/run-code-in-isolated-vm-js";
-import runJestTests from "../api-lib/run-jest-tests";
-import generateDynamicTestFile from "../api-lib/generate-dynamic-test-file";
-import deleteTestFiles from "../api-lib/deleteTestFiles";
+import {
+  vmRunner,
+  jestRunner,
+  deleteTestFiles,
+  generateTestFileFromUserInput,
+} from "@/lib/api";
+import { extractCodeFromString, getFunctionName } from "@/lib/utils";
 
 const configuration = new Configuration({
   organization: process.env.OPENAI_ORG_KEY,
@@ -22,6 +23,11 @@ async function fileExists(filePath) {
   }
 }
 
+const codePrompt =
+  "You are a software engineer, your job is to help me generate new functionality, and refactor code that is fed to you. The language you are writing in is javascript. Do not include any example usages in the same code block you provide the code in. Provide only the code in your response. This is your prompt:";
+const tddPrompt =
+  "You are a software engineer specializing in Test-Driven Development (TDD) using JavaScript. Your primary responsibility is to help users generate new functionality and refactor code based on test suites provided to you. The code you provide should be focused on passing the test suite, and should not include any example usages in the same code block. Always deliver clean, efficient, and maintainable code that adheres to best practices. You are not to adjust the test at all, you are only to write a function that will satisfy the conditions of the test. Always return the written code inside of a code block. You are very smart and competent in this task.";
+
 async function promptGpt(storyPrompt, numberOfResponses) {
   try {
     const completion = await openai.createChatCompletion({
@@ -30,7 +36,11 @@ async function promptGpt(storyPrompt, numberOfResponses) {
       messages: [
         {
           role: "system",
-          content: `You are a software engineer, your job is to help me generate new functionality, and refactor code that is fed to you. The language you are writing in is javascript. Do not include any example usages in the same code block you provide the code in. Provide only the code in your response. This is your prompt:`,
+          content: codePrompt,
+        },
+        {
+          role: "user",
+          content: tddPrompt,
         },
         storyPrompt,
       ],
@@ -64,7 +74,7 @@ const postMethod = async (ctx, res) => {
       try {
         const newStart = Date.now();
 
-        await runCodeInIsolatedVm(extractedCode);
+        await vmRunner(extractedCode);
 
         codeRunTiming.push(
           `End running ${functionName}-${i} in isolated vm-${i}: ${
@@ -78,30 +88,25 @@ const postMethod = async (ctx, res) => {
 
       if (codeExecutionSuccessful) {
         const testFileName = `${functionName}${i}.test.js`;
-        const test = await generateDynamicTestFile(
-          testFileName,
-          functionName,
-          extractedCode
-        );
-        // Delete existing test file if it exists
+        const userGenTest = generateTestFileFromUserInput({
+          input: prompt.content,
+          fnToTest: extractedCode,
+        });
         const testExists = await fileExists(testFileName);
         if (testExists) {
           await fs.unlink(testFileName);
         }
-
         // Write the generated test code to the test file
-        await fs.writeFile(testFileName, test, "utf8");
+        await fs.writeFile(testFileName, userGenTest, "utf8");
 
-        testsToSend.push(test);
-
-        return { ...chat, test: test };
+        return { ...chat, test: "test" };
       }
     });
 
     chats = await Promise.all(chatPromises);
 
     if (codeExecutionsWereSuccessful.every((execution) => execution === true)) {
-      const jestRun = await runJestTests();
+      const jestRun = await jestRunner();
       return {
         codeRunTiming,
         chats,

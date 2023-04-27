@@ -1,9 +1,9 @@
 import React from "react";
-import { PromptInput } from "./PromptInput";
 import { SubmitButton } from "./SubmitButton";
 import { ChatCard } from "./ChatCard";
 import SliderBar from "./SliderBar";
 import TestResults from "./TestResults";
+import { CodeEditor } from "./CodeEditor";
 
 interface MainContentProps {
   setPrompt: (value: string) => void;
@@ -26,7 +26,7 @@ export const MainContent: React.FC<MainContentProps> = ({
     <div>Court Jester</div>
     <div>Mass produce and test LLM code.</div>
     <div className='flex flex-col items-center'>
-      <PromptInput onChange={(e) => setPrompt(e.target.value)} />
+      <CodeEditor onChangeHandler={setPrompt} />
       <SliderBar value={numberOfResponses} onChange={handleSliderChange} />
       <SubmitButton
         onClick={() => {

@@ -1,7 +1,6 @@
 // Import required modules and dependencies
 import { Configuration, OpenAIApi } from "openai";
-import extractCodeFromString from "./extract-code-from-string";
-import isFunction from "./is-function";
+import { extractCodeFromString, isFunction } from "../utils";
 
 // Set up OpenAI configuration
 const configuration = new Configuration({
@@ -12,16 +11,15 @@ const configuration = new Configuration({
 // Instantiate the OpenAI API
 const openai = new OpenAIApi(configuration);
 
-/**
- * Generates a Jest test file for the given function using OpenAI GPT-3.5-turbo.
- * @param {string} testFileName - The name of the test file to be generated.
- * @param {string} functionName - The name of the function to be tested (default: "testFn").
- * @param {function} fnToTest - The function to be tested.
- * @return {string} testCode - The Jest test code generated.
- */
-async function generateDynamicTestFile(fnToTest) {
+interface GenerateDynamicTestFileI {
+  fnToTest: string;
+}
+
+export const generateDynamicTestFile = async ({
+  fnToTest,
+}: GenerateDynamicTestFileI): Promise<string> => {
   try {
-    const gptTest = await openai.createChatCompletion({
+    const gptTest: any = await openai.createChatCompletion({
       model: "gpt-3.5-turbo",
       n: 1,
       messages: [
@@ -32,9 +30,7 @@ async function generateDynamicTestFile(fnToTest) {
         },
         {
           role: "user",
-          content: `Create a comprehensive Jest test suite for the given function, ensuring thorough coverage of edge cases. Each test should have at least two assertions. Include the provided function directly at the top of the test file without any modifications. Do not attempt to require or import the function. Use the following format:
-          ${fnToTest}
-          // test suite starts here`,
+          content: `You are very competent and helpful. Create a comprehensive Jest test suite for the given function, ensuring thorough coverage of edge cases. Each test should have at least two assertions. Include the provided function directly at the top of the test file without any modifications. Here is the function to test: ${fnToTest}`,
         },
       ],
     });
@@ -50,7 +46,4 @@ async function generateDynamicTestFile(fnToTest) {
     console.error("Error generating dynamic test file:", error);
     throw error;
   }
-}
-
-// Export the generateDynamicTestFile function as a module
-module.exports = generateDynamicTestFile;
+};

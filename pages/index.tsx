@@ -5,7 +5,9 @@ import { MainContent } from "./components/MainContent";
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
-  const [prompt, setPrompt] = useState<string>();
+  const [prompt, setPrompt] = useState<string>(
+    `describe("add function", () => {test('add function should add multiple numbers', () => { expect(addFn("5","0",5)).toBe(10) });test('should add two positive integers', () => { expect(addFn(2,2)).toBe(4) });})`
+  );
   const [numberOfResponses, setNumberOfResponses] = useState<number>(1);
   const [chats, setChats] = useState<Response | null>();
 

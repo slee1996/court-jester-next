@@ -15,6 +15,12 @@ module.exports = {
       gridTemplateRows: {
         "first-row-0.25": "0.25fr repeat(auto-fill, 1fr)",
       },
+      backgroundColor: {
+        'editor-bg': '#1e1e1e',
+      },
+      textColor: {
+        'editor-text': '#d4d4d4',
+      },
     },
   },
   plugins: [],

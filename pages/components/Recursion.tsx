@@ -16,8 +16,6 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, depth }) => {
   const [isVisible, setIsVisible] = useState(true);
   useEffect(() => {
     if (node.displayChildren === true) {
-      console.log(node);
-
       setIsVisible((currentVal) => !currentVal);
     }
   }, [node]);

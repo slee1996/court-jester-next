@@ -1,5 +1,5 @@
-import fs from 'fs/promises';
-import path from 'path';
+import fs from "fs/promises";
+import path from "path";
 
 export const deleteTestFiles = async (): Promise<void> => {
   const rootDir = process.cwd();
@@ -8,7 +8,7 @@ export const deleteTestFiles = async (): Promise<void> => {
     const files = await fs.readdir(rootDir);
 
     for (const file of files) {
-      if (path.extname(file) === '.js' && file.endsWith('.test.js')) {
+      if (path.extname(file) === ".ts" && file.endsWith(".test.ts")) {
         try {
           await fs.unlink(path.join(rootDir, file));
           console.log(`Deleted test file: ${file}`);
@@ -20,4 +20,4 @@ export const deleteTestFiles = async (): Promise<void> => {
   } catch (err) {
     console.error(`Error reading directory: ${(err as Error).message}`);
   }
-}
+};

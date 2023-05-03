@@ -1,5 +1,4 @@
 import ivm from "isolated-vm";
-import { selfCallingFunctionClearinghouse } from "../utils";
 
 export const vmRunner = async (code: string): Promise<void> => {
   const isolate = new ivm.Isolate({ memoryLimit: 128 });
@@ -8,9 +7,9 @@ export const vmRunner = async (code: string): Promise<void> => {
   await jail.setSync("global", jail.derefInto());
 
   try {
-    await context.evalSync(selfCallingFunctionClearinghouse(code), {
+    await context.evalSync(code, {
       timeout: 5000,
-    }); // Set a timeout of 5 seconds
+    });
   } catch (err: any) {
     if (err.message === "Script execution timed out.") {
       throw new Error("An infinite loop was detected!");

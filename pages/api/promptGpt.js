@@ -6,7 +6,15 @@ import {
   deleteTestFiles,
   generateTestFileFromUserInput,
 } from "@/lib/api";
-import { extractCodeFromString, getFunctionName } from "@/lib/utils";
+import { transpile } from "typescript";
+import {
+  extractCodeFromString,
+  getFunctionName,
+  selfCallingFunctionClearinghouse,
+} from "@/lib/utils";
+import { writeData, readData } from "./utils/data";
+// import { sseClientQueue } from "./utils/sseClientQueue";
+// import { redis } from '../../utils/redis';
 
 const configuration = new Configuration({
   organization: process.env.OPENAI_ORG_KEY,
@@ -23,10 +31,16 @@ async function fileExists(filePath) {
   }
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const CHANNEL_NAME = "sseChannel";
+
 const codePrompt =
-  "You are a software engineer, your job is to help me generate new functionality, and refactor code that is fed to you. The language you are writing in is javascript. Do not include any example usages in the same code block you provide the code in. Provide only the code in your response. This is your prompt:";
+  "You are a software engineer, your job is to help me generate new functionality, and refactor code that is fed to you. The language you are writing in is typescript. Do not include any example usages in the same code block you provide the code in. Provide only the code in your response. This is your prompt:";
 const tddPrompt =
-  "You are a software engineer specializing in Test-Driven Development (TDD) using JavaScript. Your primary responsibility is to help users generate new functionality and refactor code based on test suites provided to you. The code you provide should be focused on passing the test suite, and should not include any example usages in the same code block. Always deliver clean, efficient, and maintainable code that adheres to best practices. You are not to adjust the test at all, you are only to write a function that will satisfy the conditions of the test. Always return the written code inside of a code block. You are very smart and competent in this task.";
+  "You are a software engineer specializing in Test-Driven Development (TDD) using TypeScript. Your primary responsibility is to help users generate new functionality and refactor code based on test suites provided to you. The code you provide should be focused on passing the test suite, and should not include any example usages in the same code block. Always deliver clean, efficient, and maintainable code that adheres to best practices. You are not to adjust the test at all, you are only to write a function that will satisfy the conditions of the test. Always return the written code inside of a code block. You are very smart and competent in this task.";
 
 async function promptGpt(storyPrompt, numberOfResponses) {
   try {
@@ -53,6 +67,7 @@ async function promptGpt(storyPrompt, numberOfResponses) {
 }
 
 const postMethod = async (ctx, res) => {
+  writeData(`data: "New request chain"`);
   const { prompt, numberOfResponses } = JSON.parse(ctx.body);
   let chats;
   const codeExecutionsWereSuccessful = [];
@@ -66,28 +81,28 @@ const postMethod = async (ctx, res) => {
     const chatPromises = chats.map(async (chat, i) => {
       const extractedCode = extractCodeFromString(chat.message.content);
       const functionName = getFunctionName(extractedCode);
+      await sleep(100);
+      // await redis.publish(CHANNEL_NAME, 'message');
 
       generatedFunctions.add(functionName);
 
       let codeExecutionSuccessful = false;
 
       try {
+        const tsCode = transpile(
+          selfCallingFunctionClearinghouse(extractedCode)
+        );
+
         const newStart = Date.now();
 
-        await vmRunner(extractedCode);
-
-        codeRunTiming.push(
-          `End running ${functionName}-${i} in isolated vm-${i}: ${
-            Date.now() - newStart
-          }ms`
-        );
+        await vmRunner(tsCode);
         codeExecutionSuccessful = true;
       } catch {
         codeExecutionSuccessful = false;
       }
 
       if (codeExecutionSuccessful) {
-        const testFileName = `${functionName}${i}.test.js`;
+        const testFileName = `${functionName}${i}.test.ts`;
         const userGenTest = generateTestFileFromUserInput({
           input: prompt.content,
           fnToTest: extractedCode,
@@ -107,6 +122,13 @@ const postMethod = async (ctx, res) => {
 
     if (codeExecutionsWereSuccessful.every((execution) => execution === true)) {
       const jestRun = await jestRunner();
+
+      writeData({
+        codeRunTiming,
+        chats,
+        jestRun,
+        testsToSend,
+      });
       return {
         codeRunTiming,
         chats,

@@ -95,12 +95,12 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ onChangeHandler }) => {
           onChangeHandler(e.target.value);
         }}
       />
-      <button
+      {/* <button
         onClick={copyCode}
         className='absolute text-white text-xs font-semibold bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded'
       >
         Copy Code
-      </button>
+      </button> */}
     </div>
   );
 };

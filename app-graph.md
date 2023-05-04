@@ -1,30 +1,6 @@
-   ┌──────────┐        ┌──────────┐\
-   │  CLIENT    │───(1)─▶│    API   │\
-   └──────────┘        └────┬─────┘\
-                            │\
-                ┌──────────▼──────────┐\
-                │                     │\
-        ┌───────▼─────┐       ┌───────▼─────┐\
-        │ Code Agent  │◀──(6)─│ Test Engine │\
-        └───────┬─────┘       └───────┬─────┘\
-                └─────(2)─────────────┘\
-                                │\
-                        ┌───────▼──────┐\
-                        │ genTestFiles │\
-                        └───────┬──────┘\
-                                │\
-                               (3)\
-                                │\
-                        ┌───────▼──────┐\
-                        │ runTestFiles │\
-                        └───────┬──────┘\
-                               (4)\
-                                │\
-                                └─────┐\
-                                      │\
-                                      ├──────────(5)──────────┐\
-                                      │                       │\
-                                      └──────────(5)──────────┘\
+![App Graph](https://user-images.githubusercontent.com/57108776/236294360-73e2d818-5b6c-497e-8a6c-2ab31ac19af4.svg)
+
+
 1. Client sends a prompt to the API.
 2. API sends the prompt to Code Agent and Test Engine.
 3. Test Engine generates test files based on the prompt and potential solution attempts received from Code Agent.

@@ -23,7 +23,11 @@ export const MainContent: React.FC<MainContentProps> = ({
   chats,
 }) => (
   <main className='flex min-h-screen flex-col items-center justify-center p-24 w-full'>
-    <div>Court Jester</div>
+    <div>
+      <h1 className='text-4xl font-bold text-white glitch'>
+        Giacomo
+      </h1>
+    </div>
     <div>Mass produce and test LLM code.</div>
     <div className='flex flex-col items-center'>
       <CodeEditor onChangeHandler={setPrompt} />

@@ -6,7 +6,15 @@ import {
   deleteTestFiles,
   generateTestFileFromUserInput,
 } from "@/lib/api";
-import { extractCodeFromString, getFunctionName } from "@/lib/utils";
+import { transpile } from "typescript";
+import {
+  extractCodeFromString,
+  getFunctionName,
+  selfCallingFunctionClearinghouse,
+} from "@/lib/utils";
+import { writeData, readData } from "./utils/data";
+// import { sseClientQueue } from "./utils/sseClientQueue";
+// import { redis } from '../../utils/redis';
 
 const configuration = new Configuration({
   organization: process.env.OPENAI_ORG_KEY,
@@ -22,6 +30,12 @@ async function fileExists(filePath) {
     return false;
   }
 }
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const CHANNEL_NAME = "sseChannel";
 
 const codePrompt =
   "You are a software engineer, your job is to help me generate new functionality, and refactor code that is fed to you. The language you are writing in is javascript. Do not include any example usages in the same code block you provide the code in. Provide only the code in your response. This is your prompt:";
@@ -61,33 +75,32 @@ const postMethod = async (ctx, res) => {
 
   try {
     chats = await promptGpt(prompt, numberOfResponses);
-    const generatedFunctions = new Set();
 
     const chatPromises = chats.map(async (chat, i) => {
       const extractedCode = extractCodeFromString(chat.message.content);
       const functionName = getFunctionName(extractedCode);
+      await sleep(100);
+      // await redis.publish(CHANNEL_NAME, 'message');
 
       generatedFunctions.add(functionName);
 
       let codeExecutionSuccessful = false;
 
       try {
+        const tsCode = transpile(
+          selfCallingFunctionClearinghouse(extractedCode)
+        );
+
         const newStart = Date.now();
 
-        await vmRunner(extractedCode);
-
-        codeRunTiming.push(
-          `End running ${functionName}-${i} in isolated vm-${i}: ${
-            Date.now() - newStart
-          }ms`
-        );
+        await vmRunner(tsCode);
         codeExecutionSuccessful = true;
       } catch {
         codeExecutionSuccessful = false;
       }
 
       if (codeExecutionSuccessful) {
-        const testFileName = `${functionName}${i}.test.js`;
+        const testFileName = `${functionName}${i}.test.ts`;
         const userGenTest = generateTestFileFromUserInput({
           input: prompt.content,
           fnToTest: extractedCode,
@@ -126,7 +139,7 @@ export default async function handler(req, res) {
 
     res.status(200).json(body);
 
-    await deleteTestFiles();
+    flushTempFolder();
   } else {
     res.status(200).json({ message: "owo whats this? no handling >w<" });
   }
